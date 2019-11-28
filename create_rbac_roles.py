@@ -86,10 +86,53 @@ def __create_rbac_user(token):
 
 def __create_rbac_role(token):
     '''
-    Create an RBAC role
+    Create an RBAC role and setup permissions
     '''
 
-    assert isinstance(token, str)
+    assert isinstance(token, unicode)
+
+
+def __get_user_ids(token):
+    '''
+    Gets the id's of all users configured on the PE master
+
+    Parameters:
+    token (unicode):
+
+    Returns:
+    dict: Returns a dictionary containing the username:id key value pairs
+    '''
+
+    assert isinstance(token, unicode)
+
+    api_endpoint = 'https://master.example.com:4433/rbac-api/v1/users'
+    params = {"certfile": cert_file}
+    headers = {'content-type': 'application/json', 'X-Authentication': token}
+    
+    # ==================
+    # Submit the request
+    # ==================
+    s = requests.Session()
+    r = s.get(api_endpoint, params=params, headers=headers, verify=False)
+    users = r.json()
+
+    # ====================================================
+    # Create a new dict to keep the username to id mapping
+    # ====================================================
+    username_to_id = {}
+
+    for dict in users:
+        print "username: %s, id: %s" % (dict['login'], dict['id'])
+
+	login = dict['login']
+	id = dict['id']
+
+	ername_to_idsername_to_id[login] = id
+
+    print username_to_id
+
+def __get_role_ids(token, role):
+    pass
 
 
 if __name__ == '__main__':
@@ -103,13 +146,23 @@ if __name__ == '__main__':
     # Generate a token for this session
     # =================================
     token = __create_token(username, password, lifetime)
-
     # =====================
     # Create the RBAC roles
     # =====================
-    __create_rbac_role(token)
+    # rbac_role_names = ("Splunk", \
+    #                    "Tyk API Gateway", \
+    #     	       "websphere_task_runner", \
+    #     	       "MongoDB Initialization" \
+    #     	      )
+
+    # for role_name in rbac_role_names:
+    #   __create_rbac_role(token, role_name)
 
     # =====================
     # Create the RBAC users
     # =====================
-    __create_rbac_user(token)
+    # __create_rbac_user(token)
+
+    __get_user_ids(token)
+
+
