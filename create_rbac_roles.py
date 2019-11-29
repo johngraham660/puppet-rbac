@@ -82,6 +82,7 @@ def __create_rbac_user(token):
     '''
 
     assert isinstance(token, str)
+    # TODO: Parse users config file
 
 
 def __create_rbac_role(token):
@@ -90,6 +91,7 @@ def __create_rbac_role(token):
     '''
 
     assert isinstance(token, unicode)
+    # TODO: Parse roles config file
 
 
 def __get_user_ids(token):
@@ -108,6 +110,7 @@ def __get_user_ids(token):
     api_endpoint = 'https://master.example.com:4433/rbac-api/v1/users'
     params = {"certfile": cert_file}
     headers = {'content-type': 'application/json', 'X-Authentication': token}
+    username_to_id = {}
     
     # ==================
     # Submit the request
@@ -116,53 +119,77 @@ def __get_user_ids(token):
     r = s.get(api_endpoint, params=params, headers=headers, verify=False)
     users = r.json()
 
-    # ====================================================
-    # Create a new dict to keep the username to id mapping
-    # ====================================================
-    username_to_id = {}
-
     for dict in users:
-        print "username: %s, id: %s" % (dict['login'], dict['id'])
+
+        # print "username: %s, id: %s" % (dict['login'], dict['id'])
 
 	login = dict['login']
 	id = dict['id']
+	username_to_id[login] = id
 
-	uername_to_id[login] = id
+    return username_to_id
 
-    print username_to_id
+def __get_role_ids(token):
+    """
+    <Doc String here>
+    """
+    assert isinstance(token, unicode)
 
-def __get_role_ids(token, role):
-    pass
+    api_endpoint = 'https://master.example.com:4433/rbac-api/v1/roles'
+    params = {"certfile": cert_file}
+    headers = {'content-type': 'application/json', 'X-Authentication': token}
+    rolename_to_id = {}
+    
+    # ==================
+    # Submit the request
+    # ==================
+    s = requests.Session()
+    r = s.get(api_endpoint, params=params, headers=headers, verify=False)
+    roles = r.json()
+
+    #print roles
+
+    for dict in roles:
+
+        #print "role name: %s, id: %s" % (dict['display_name'], dict['id'])
+
+	display_name = dict['display_name']
+	id = dict['id']
+	rolename_to_id[display_name] = id
+
+    return rolename_to_id
+
 
 
 if __name__ == '__main__':
 
+    # ======================================
+    # Section block for parsing cmdline args
+    # ======================================
+
     # ==========================================================================
     # Get the Puppet master CA certificate as we will need this for all requests
     # ==========================================================================
+    # TODO: This needs to be written to an appropriate directory
     __get_pemaster_cacert()
 
     # =================================
     # Generate a token for this session
     # =================================
     token = __create_token(username, password, lifetime)
+
     # =====================
     # Create the RBAC roles
     # =====================
-    # rbac_role_names = ("Splunk", \
-    #                    "Tyk API Gateway", \
-    #     	       "websphere_task_runner", \
-    #     	       "MongoDB Initialization" \
-    #     	      )
 
-    # for role_name in rbac_role_names:
-    #   __create_rbac_role(token, role_name)
 
     # =====================
     # Create the RBAC users
     # =====================
-    # __create_rbac_user(token)
+    # TODO: Parse external file that defines valid users.
 
-    __get_user_ids(token)
-
+    user_ids = __get_user_ids(token)
+    #role_ids = __get_role_ids(token)
+    role_ids = __get_role_ids(token)
+    print role_ids
 
