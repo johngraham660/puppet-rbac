@@ -127,7 +127,7 @@ def __get_user_ids(token):
 	login = dict['login']
 	id = dict['id']
 
-	ername_to_idsername_to_id[login] = id
+	uername_to_id[login] = id
 
     print username_to_id
 
