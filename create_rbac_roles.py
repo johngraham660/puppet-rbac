@@ -4,14 +4,7 @@ import os
 import sys
 import requests
 import json
-
-#modules = ("requests", "json")
-#
-#for module in modules:
-#  try:
-#    import module
-#  except ImportError as e:
-#    print "import Error: %s" % e
+import argparse
 
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
@@ -21,7 +14,8 @@ lifetime = "1y"
 cert_file = 'ca.pem'
 pemaster = 'master.example.com'
 
-def __get_pemaster_cacert():
+
+def __get_pemaster_cacert(pemaster):
 
     cacert_url = 'https://master.example.com:8140/puppet-ca/v1/certificate/ca'
     cert_file = 'ca.pem'
@@ -34,14 +28,15 @@ def __get_pemaster_cacert():
 
     return True
 
+
 def __create_token(username, password, lifetime):
     '''
     Generates an authentication token
 
     Parameters:
-    username  (str): The user account that should be used to authenticate with the puupet server
-    password  (str): The password that authenticates the username provided.
-    lifetimne (str): lifetime determines how long the authentication token is valid for
+    username  (str):The account that should be used to authenticate with the API # noqa: E501
+    password  (str):The password that authenticates the username provided.
+    lifetimne (str):lifetime determines how long the authentication token is valid for
 
     Returns:
     str: Returns the authentication token string
@@ -53,7 +48,7 @@ def __create_token(username, password, lifetime):
     assert isinstance(username, str)
     assert isinstance(password, str)
     assert isinstance(lifetime, str)
-   
+
     # ============================================================
     # Setup the values that wil be passed to the rbac-api endpoint
     # ============================================================
@@ -66,13 +61,16 @@ def __create_token(username, password, lifetime):
     # Submit the request
     # ==================
     s = requests.Session()
-    r = s.post(token_url, data=json.dumps(data), params=params, headers=headers, verify=False)
+    r = s.post(token_url, data=json.dumps(data),
+               params=params,
+               headers=headers,
+               verify=False)
     token = r.json()
 
     # ================
     # Return the token
     # ================
-    return token['token'] 
+    return token['token']
 
 
 def __create_rbac_user(token):
@@ -111,7 +109,7 @@ def __get_user_ids(token):
     params = {"certfile": cert_file}
     headers = {'content-type': 'application/json', 'X-Authentication': token}
     username_to_id = {}
-    
+
     # ==================
     # Submit the request
     # ==================
@@ -120,14 +118,14 @@ def __get_user_ids(token):
     users = r.json()
 
     for dict in users:
+        print "%s : %s" % (dict['login'], dict['id'])
 
-        # print "username: %s, id: %s" % (dict['login'], dict['id'])
-
-	login = dict['login']
-	id = dict['id']
-	username_to_id[login] = id
+    login = dict['login']
+    id = dict['id']
+    username_to_id[login] = id
 
     return username_to_id
+
 
 def __get_role_ids(token):
     """
@@ -139,7 +137,7 @@ def __get_role_ids(token):
     params = {"certfile": cert_file}
     headers = {'content-type': 'application/json', 'X-Authentication': token}
     rolename_to_id = {}
-    
+
     # ==================
     # Submit the request
     # ==================
@@ -147,18 +145,14 @@ def __get_role_ids(token):
     r = s.get(api_endpoint, params=params, headers=headers, verify=False)
     roles = r.json()
 
-    #print roles
-
     for dict in roles:
+        print "role name: %s, id: %s" % (dict['display_name'], dict['id'])
 
-        #print "role name: %s, id: %s" % (dict['display_name'], dict['id'])
-
-	display_name = dict['display_name']
-	id = dict['id']
-	rolename_to_id[display_name] = id
+    display_name = dict['display_name']
+    id = dict['id']
+    rolename_to_id[display_name] = id
 
     return rolename_to_id
-
 
 
 if __name__ == '__main__':
@@ -166,12 +160,17 @@ if __name__ == '__main__':
     # ======================================
     # Section block for parsing cmdline args
     # ======================================
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--server",
+                        help="The Puppet Enterprise server hosting the API"
+                        action="store_true")
+    args = parser.parse_args()
 
-    # ==========================================================================
-    # Get the Puppet master CA certificate as we will need this for all requests
-    # ==========================================================================
+    # ===================================================================
+    # Get the master CA certificate as we will need this for all requests
+    # ===================================================================
     # TODO: This needs to be written to an appropriate directory
-    __get_pemaster_cacert()
+    __get_pemaster_cacert(pemaster)
 
     # =================================
     # Generate a token for this session
@@ -182,14 +181,12 @@ if __name__ == '__main__':
     # Create the RBAC roles
     # =====================
 
-
     # =====================
     # Create the RBAC users
     # =====================
     # TODO: Parse external file that defines valid users.
 
     user_ids = __get_user_ids(token)
-    #role_ids = __get_role_ids(token)
+    role_ids = __get_role_ids(token)
     role_ids = __get_role_ids(token)
     print role_ids
-
