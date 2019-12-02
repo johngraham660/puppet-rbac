@@ -1,0 +1,44 @@
+{
+    "rbac_users": [
+        {
+            "login":"svc-ucdadmin",
+            "email":"fm939393@rbs.co.uk",
+            "display_name":"UCD Service Account",
+            "password":"ucdadmin123"
+        },
+        {
+            "login":"svc-tykadmin",
+            "email":"fm939393@rbs.co.uk",
+            "display_name":"Tyk Service Account",
+            "password":"tyk123"
+        },
+        {
+            "login":"svc-mongodb",
+            "email":"fm939393@rbs.co.uk",
+            "display_name":"MongoDB Service Account",
+            "password":"mongodb123"
+        }
+    ],
+    "rbac_roles": [
+        {
+            "display_name": "websphere_task_runner",
+            "description": "Allows UCD to execute add_dpmgr_to_hosts task",
+            "user_ids": [],
+            "permissions": [
+                {
+                    "object_type": "node_groups",
+                    "action": "view",
+                    "instance": "*"
+                },
+                {
+                    "object_type": "orchestrator",
+                    "action": "view",
+                    "instance": "*"
+                },
+                {
+                    "object_type": "Tasks",
+                    "action": "run_with_constraints",
+                    "instance": ""
+                }]
+        }]
+}

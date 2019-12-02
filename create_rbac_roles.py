@@ -1,4 +1,4 @@
-#! python3
+#! /usr/bin/env python
 
 import os
 import sys
@@ -12,12 +12,12 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 username, password = open('credentials.txt').read().strip().split(',')
 lifetime = "1y"
 cert_file = 'ca.pem'
-pemaster = 'master.example.com'
+pemaster = 'uvpup010.virtua.vm'
 
 
 def __get_pemaster_cacert(pemaster):
 
-    cacert_url = 'https://master.example.com:8140/puppet-ca/v1/certificate/ca'
+    cacert_url = 'https://' + pemaster + ':8140/puppet-ca/v1/certificate/ca'
     cert_file = 'ca.pem'
 
     s = requests.Session()
@@ -52,7 +52,7 @@ def __create_token(username, password, lifetime):
     # ============================================================
     # Setup the values that wil be passed to the rbac-api endpoint
     # ============================================================
-    token_url = 'https://master.example.com:4433/rbac-api/v1/auth/token'
+    token_url = 'https://' + pemaster + ':4433/rbac-api/v1/auth/token'
     params = {"certfile": cert_file}
     data = {"login": username, "password": password, "lifetime": lifetime}
     headers = {'content-type': 'application/json'}
@@ -73,14 +73,36 @@ def __create_token(username, password, lifetime):
     return token['token']
 
 
-def __create_rbac_user(token):
+def __create_rbac_resource(token, data, rbac_type):
     '''
-    Create an RBAC user
-
+    Create an RBAC user or role resource
     '''
+    print type(data)
 
-    assert isinstance(token, str)
-    # TODO: Parse users config file
+    assert isinstance(token, unicode)
+    assert isinstance(data, list)
+    assert isinstance(rbac_type, str)
+
+    if rbac_type == "rbac_user":
+        api_endpoint = "https://" + pemaster + "4433:/rbac-api/v1/users"
+    elif rbac_type == "rbac_role":
+        api_endpoint = "https://" + pemaster + "4433:/rbac-api/v1/roles"
+
+    params = {"certfile": cert_file}
+    headers = {'content-type': 'application/json'}
+
+    print data
+    sys.exit(1)
+    s = requests.Session()
+    r = s.post(api_endpoint, data=json.dumps(data),
+               params=params,
+               headers=headers,
+               verify=False)
+
+    if r.status_code == 201:
+        print "Reource created"
+    elif r.status_code == 409:
+        print "Failed to create resource"
 
 
 def __create_rbac_role(token):
@@ -105,7 +127,7 @@ def __get_user_ids(token):
 
     assert isinstance(token, unicode)
 
-    api_endpoint = 'https://master.example.com:4433/rbac-api/v1/users'
+    api_endpoint = 'https://' + pemaster + ':4433/rbac-api/v1/users'
     params = {"certfile": cert_file}
     headers = {'content-type': 'application/json', 'X-Authentication': token}
     username_to_id = {}
@@ -118,11 +140,10 @@ def __get_user_ids(token):
     users = r.json()
 
     for dict in users:
-        print "%s : %s" % (dict['login'], dict['id'])
-
-    login = dict['login']
-    id = dict['id']
-    username_to_id[login] = id
+        # print "%s : %s" % (dict['login'], dict['id'])
+        login = dict['login']
+        id = dict['id']
+        username_to_id[login] = id
 
     return username_to_id
 
@@ -133,7 +154,7 @@ def __get_role_ids(token):
     """
     assert isinstance(token, unicode)
 
-    api_endpoint = 'https://master.example.com:4433/rbac-api/v1/roles'
+    api_endpoint = 'https://' + pemaster + ':4433/rbac-api/v1/roles'
     params = {"certfile": cert_file}
     headers = {'content-type': 'application/json', 'X-Authentication': token}
     rolename_to_id = {}
@@ -146,11 +167,10 @@ def __get_role_ids(token):
     roles = r.json()
 
     for dict in roles:
-        print "role name: %s, id: %s" % (dict['display_name'], dict['id'])
-
-    display_name = dict['display_name']
-    id = dict['id']
-    rolename_to_id[display_name] = id
+        # print "role name: %s, id: %s" % (dict['display_name'], dict['id'])
+        display_name = dict['display_name']
+        id = dict['id']
+        rolename_to_id[display_name] = id
 
     return rolename_to_id
 
@@ -162,7 +182,7 @@ if __name__ == '__main__':
     # ======================================
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--server",
-                        help="The Puppet Enterprise server hosting the API"
+                        help="The Puppet Enterprise server hosting the API",
                         action="store_true")
     args = parser.parse_args()
 
@@ -175,18 +195,39 @@ if __name__ == '__main__':
     # =================================
     # Generate a token for this session
     # =================================
-    token = __create_token(username, password, lifetime)
+    if os.path.isfile('./credentials.txt'):
+        token = __create_token(username, password, lifetime)
+    else:
+        print "Cannot locate credentials file"
+        sys.exit(1)
 
-    # =====================
-    # Create the RBAC roles
-    # =====================
+    if os.path.isfile('./rbac.json'):
+        with open('rbac.json', 'r') as json_file:
+            rbac_data = json.load(json_file)
+            rbac_roles = rbac_data['rbac_roles']
+            rbac_users = rbac_data['rbac_users']
+    else:
+        print "Cannot locate rbac.json file"
+        sys.exit(1)
 
     # =====================
     # Create the RBAC users
     # =====================
-    # TODO: Parse external file that defines valid users.
+    # for users in rbac_users:
+    #     __create_rbac_resource(token, rbac_users, "rbac_user")
 
-    user_ids = __get_user_ids(token)
-    role_ids = __get_role_ids(token)
-    role_ids = __get_role_ids(token)
-    print role_ids
+    # =====================
+    # Create the RBAC roles
+    # =====================
+    for roles in rbac_roles:
+        __create_rbac_resource(token, rbac_roles, "rbac_role")
+
+    # user_ids = __get_user_ids(token)
+    # role_ids = __get_role_ids(token)
+
+    # print user_ids
+    # print role_ids
+    print type(rbac_users)
+    print type(rbac_roles)
+    print "Users: %s" % rbac_users
+    print "Roles: %s" % rbac_roles
