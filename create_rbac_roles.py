@@ -220,8 +220,6 @@ if __name__ == '__main__':
     # =====================
     # Create the RBAC roles
     # =====================
-    # =====================
-    # =====================
     # for roles in rbac_roles:
     #     __create_rbac_resource(token, rbac_roles, "rbac_role")
 
