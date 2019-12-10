@@ -2,19 +2,19 @@
     "rbac_users": [
         {
             "login":"svc-ucdadmin",
-            "email":"fm939393@rbs.co.uk",
+            "email":"user@email.com",
             "display_name":"UCD Service Account",
             "password":"ucdadmin123"
         },
         {
             "login":"svc-tykadmin",
-            "email":"fm939393@rbs.co.uk",
+            "email":"user@email.com",
             "display_name":"Tyk Service Account",
             "password":"tyk123"
         },
         {
             "login":"svc-mongodb",
-            "email":"fm939393@rbs.co.uk",
+            "email":"user@email.com",
             "display_name":"MongoDB Service Account",
             "password":"mongodb123"
         }
