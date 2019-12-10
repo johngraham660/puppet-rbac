@@ -16,7 +16,7 @@ import json
 #     # Python 2
 #     import httplib as http_client
 # http_client.HTTPConnection.debuglevel = 1
-# 
+#
 # logging.basicConfig()
 # logging.getLogger().setLevel(logging.DEBUG)
 # requests_log = logging.getLogger("requests.packages.urllib3")
@@ -127,15 +127,14 @@ def __create_rbac_resource(token, data, rbac_type):
                headers=headers,
                verify=False)
 
-    if r.status_code == 201:
-        print "Resource created successfully"
+    if r.status_code == 200:
+        return True
+    elif r.status_code == 201:
         return True
     elif r.status_code == 409:
-        print "Failed to create RBAC resource"
         return False
     elif r.status_code == 400:
-        print "Got a 400 error, exiting"
-        sys.exit(1)
+        return False
 
 
 def __get_user_ids(token):
@@ -240,7 +239,10 @@ if __name__ == '__main__':
     # =====================
     for users in rbac_users:
         print "Creating RBAC user: %s" % users['login']
-        __create_rbac_resource(token, users, "rbac_user")
+        if __create_rbac_resource(token, users, "rbac_user"):
+            print "\tResource created successfully"
+        else:
+            print "\tFailed to create resource"
 
     # =====================
     # Create the RBAC roles
@@ -249,10 +251,10 @@ if __name__ == '__main__':
     #     __create_rbac_resource(token, rbac_roles, "rbac_role")
 
     user_ids = __get_user_ids(token)
-    role_ids = __get_role_ids(token)
+    # role_ids = __get_role_ids(token)
 
     print user_ids
-    print role_ids
+    # print role_ids
     # print type(rbac_users)
     # print type(rbac_roles)
     # print "Users: %s" % rbac_users
