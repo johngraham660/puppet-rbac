@@ -180,11 +180,12 @@ if __name__ == '__main__':
     # ======================================
     # Section block for parsing cmdline args
     # ======================================
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--server",
-                        help="The Puppet Enterprise server hosting the API",
-                        action="store_true")
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument("-s", "--server",
+    #                     help="The Puppet Enterprise server hosting the API",
+    #                     action="store_true",
+    #                     required=True)
+    # args = parser.parse_args()
 
     # ===================================================================
     # Get the master CA certificate as we will need this for all requests
@@ -219,8 +220,8 @@ if __name__ == '__main__':
     # =====================
     # Create the RBAC roles
     # =====================
-    for roles in rbac_roles:
-        __create_rbac_resource(token, rbac_roles, "rbac_role")
+    # for roles in rbac_roles:
+    #     __create_rbac_resource(token, rbac_roles, "rbac_role")
 
     # user_ids = __get_user_ids(token)
     # role_ids = __get_role_ids(token)
