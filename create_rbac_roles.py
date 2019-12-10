@@ -4,7 +4,24 @@ import os
 import sys
 import requests
 import json
-import argparse
+# import argparse
+
+# ==================================================
+# Uncomment here to enable debugging web connections
+# ==================================================
+# import logging
+# try:
+#     import http.client as http_client
+# except ImportError:
+#     # Python 2
+#     import httplib as http_client
+# http_client.HTTPConnection.debuglevel = 1
+# 
+# logging.basicConfig()
+# logging.getLogger().setLevel(logging.DEBUG)
+# requests_log = logging.getLogger("requests.packages.urllib3")
+# requests_log.setLevel(logging.DEBUG)
+# requests_log.propagate = True
 
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
@@ -76,23 +93,34 @@ def __create_token(username, password, lifetime):
 def __create_rbac_resource(token, data, rbac_type):
     '''
     Create an RBAC user or role resource
+
+    Parameters:
+    token (unicode): The authentication token
+    data (dict): A dictionary defining the user or role to be created
+    rbac_type (str): Accepts rbac_user or rbac_role
+
+    Returns:
+    True or False (boolean)
     '''
-    print type(data)
 
     assert isinstance(token, unicode)
-    assert isinstance(data, list)
+    assert isinstance(data, dict)
     assert isinstance(rbac_type, str)
 
     if rbac_type == "rbac_user":
-        api_endpoint = "https://" + pemaster + "4433:/rbac-api/v1/users"
+        api_endpoint = "https://" + pemaster + ":4433/rbac-api/v1/users"
     elif rbac_type == "rbac_role":
-        api_endpoint = "https://" + pemaster + "4433:/rbac-api/v1/roles"
+        api_endpoint = "https://" + pemaster + ":4433/rbac-api/v1/roles"
 
     params = {"certfile": cert_file}
-    headers = {'content-type': 'application/json'}
+    headers = {'content-type': 'application/json', 'X-Authentication': token}
 
-    print data
-    sys.exit(1)
+    # print "In __create_rbac_resource"
+    # print api_endpoint
+    # print data
+    # print "End"
+    # sys.exit(1)
+
     s = requests.Session()
     r = s.post(api_endpoint, data=json.dumps(data),
                params=params,
@@ -100,18 +128,14 @@ def __create_rbac_resource(token, data, rbac_type):
                verify=False)
 
     if r.status_code == 201:
-        print "Reource created"
+        print "Resource created successfully"
+        return True
     elif r.status_code == 409:
-        print "Failed to create resource"
-
-
-def __create_rbac_role(token):
-    '''
-    Create an RBAC role and setup permissions
-    '''
-
-    assert isinstance(token, unicode)
-    # TODO: Parse roles config file
+        print "Failed to create RBAC resource"
+        return False
+    elif r.status_code == 400:
+        print "Got a 400 error, exiting"
+        sys.exit(1)
 
 
 def __get_user_ids(token):
@@ -214,8 +238,9 @@ if __name__ == '__main__':
     # =====================
     # Create the RBAC users
     # =====================
-    # for users in rbac_users:
-    #     __create_rbac_resource(token, rbac_users, "rbac_user")
+    for users in rbac_users:
+        print "Creating RBAC user: %s" % users['login']
+        __create_rbac_resource(token, users, "rbac_user")
 
     # =====================
     # Create the RBAC roles
@@ -223,12 +248,12 @@ if __name__ == '__main__':
     # for roles in rbac_roles:
     #     __create_rbac_resource(token, rbac_roles, "rbac_role")
 
-    # user_ids = __get_user_ids(token)
-    # role_ids = __get_role_ids(token)
+    user_ids = __get_user_ids(token)
+    role_ids = __get_role_ids(token)
 
-    # print user_ids
-    # print role_ids
-    print type(rbac_users)
-    print type(rbac_roles)
-    print "Users: %s" % rbac_users
-    print "Roles: %s" % rbac_roles
+    print user_ids
+    print role_ids
+    # print type(rbac_users)
+    # print type(rbac_roles)
+    # print "Users: %s" % rbac_users
+    # print "Roles: %s" % rbac_roles
